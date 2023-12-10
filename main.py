@@ -75,6 +75,7 @@ if __name__ == '__main__':
     ### else
     parser.add_argument('--att', type=int, default=2, help="audio attention mode (0 = turn off, 1 = left-direction, 2 = bi-direction)")
     parser.add_argument('--aud', type=str, default='', help="audio source (empty will load the default, else should be a path to a npy file)")
+    parser.add_argument('--cond_type', type=str, default='idexp', help="type of driving condition: eo, ds, idexp")
     parser.add_argument('--emb', action='store_true', help="use audio class + embedding instead of logits")
 
     parser.add_argument('--ind_dim', type=int, default=4, help="individual code dim, 0 to turn off")
@@ -128,7 +129,7 @@ if __name__ == '__main__':
         # do not update density grid in finetune stage
         opt.update_extra_interval = 1e9
     
-    from nerf.network import NeRFNetwork
+    from nerf.network import NeRFNetwork, R2TalkerNeRF
 
     print(opt)
     
@@ -136,7 +137,10 @@ if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    model = NeRFNetwork(opt)
+    if opt.cond_type == 'idexp':
+        model = R2TalkerNeRF(opt)
+    else:
+        model = NeRFNetwork(opt)
 
     # manually load state dict for head
     if opt.torso and opt.head_ckpt != '':

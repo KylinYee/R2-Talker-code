@@ -7,13 +7,11 @@ build/
 tmp*
 trial*/
 
-data
+data/*
 data_utils/face_tracking/3DMM/*
 data_utils/face_parsing/79999_iter.pth
 
 pretrained
 *.mp4
 
-scripts/train_chris_eo.sh
-scripts/train_marco_eo.sh
-scripts/test.sh
+scripts/*

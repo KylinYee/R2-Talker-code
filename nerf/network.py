@@ -36,7 +36,6 @@ class AudioAttNet(nn.Module):
         y = self.attentionNet(y.view(1, self.seq_len)).view(1, self.seq_len, 1)
         return torch.sum(y * x, dim=1) # [1, dim_aud]
 
-
 # Audio feature extractor
 class AudioNet(nn.Module):
     def __init__(self, dim_in=29, dim_aud=64, win_size=16):
@@ -79,14 +78,23 @@ class MLP(nn.Module):
             net.append(nn.Linear(self.dim_in if l == 0 else self.dim_hidden, self.dim_out if l == num_layers - 1 else self.dim_hidden, bias=False))
 
         self.net = nn.ModuleList(net)
-    
-    def forward(self, x):
-        for l in range(self.num_layers):
-            x = self.net[l](x)
-            if l != self.num_layers - 1:
-                x = F.relu(x, inplace=True)
-        return x
 
+    def forward(self, x, scales=None, shifts=None):
+        if scales is not None and shifts is not None:
+            for l in range(self.num_layers):
+                x = self.net[l](x)
+                if l != self.num_layers - 1:
+                    shift = scales[l].repeat(x.shape[0], 1) # [1,cond_dim] ==> [N, cond_dim]
+                    scale = shifts[l].repeat(x.shape[0], 1) # [1,cond_dim] ==> [N, cond_dim]
+                    x = x*(scale+1.0)+shift
+                    x = F.relu(x, inplace=True)
+
+        else:
+            for l in range(self.num_layers):
+                x = self.net[l](x)
+                if l != self.num_layers - 1:
+                    x = F.relu(x, inplace=True)
+        return x
 
 class NeRFNetwork(NeRFRenderer):
     def __init__(self,
@@ -357,5 +365,197 @@ class NeRFNetwork(NeRFRenderer):
         if self.train_camera:
             params.append({'params': self.camera_dT, 'lr': 1e-5, 'weight_decay': 0})
             params.append({'params': self.camera_dR, 'lr': 1e-5, 'weight_decay': 0})
+
+        return params
+
+class R2TalkerNeRF(NeRFRenderer):
+    def __init__(self,
+                 opt,
+                 # main network
+                 num_layers=3,
+                 hidden_dim=64,
+                 geo_feat_dim=64,
+                 num_layers_color=2,
+                 hidden_dim_color=64,
+                 ):
+        super().__init__(opt)
+
+        self.audio_in_dim = 68*3*5
+        self.att = self.opt.att
+
+        # lms encoding network
+        self.encoder, self.in_dim = get_encoder('tiledgrid', input_dim=3, num_levels=16, level_dim=4, base_resolution=32, log2_hashmap_size=16, desired_resolution=2048 * self.bound, interpolation='linear')
+        self.encoder_idexp_lm3d, self.in_dim_idexp_lm3d = get_encoder('tiledgrid', input_dim=3, num_levels=16, level_dim=2, base_resolution=32, log2_hashmap_size=16, desired_resolution=2048, interpolation='linear')
+
+
+        # sigma network
+        self.num_layers = num_layers
+        self.hidden_dim = hidden_dim
+        self.geo_feat_dim = geo_feat_dim
+
+        self.eye_dim = 1 if self.exp_eye else 0
+
+        self.sigma_net = MLP(self.in_dim, 1 + self.geo_feat_dim, self.hidden_dim, self.num_layers)
+
+        # color network
+        self.num_layers_color = num_layers_color        
+        self.hidden_dim_color = hidden_dim_color
+        self.encoder_dir, self.in_dim_dir = get_encoder('spherical_harmonics')
+
+        self.color_net = MLP(self.in_dim_dir + self.geo_feat_dim + self.individual_dim, 3, self.hidden_dim_color, self.num_layers_color)
+
+        self.mlp_lms_style_1 = MLP(dim_in=5*68*self.in_dim_idexp_lm3d, dim_out=self.hidden_dim*2, dim_hidden=128, num_layers=3)
+        self.mlp_lms_style_2 = MLP(dim_in=5*68*self.in_dim_idexp_lm3d, dim_out=self.hidden_dim*2, dim_hidden=128, num_layers=3)
+
+
+
+        if self.torso:
+            # torso deform network
+            self.torso_deform_encoder, self.torso_deform_in_dim = get_encoder('frequency', input_dim=2, multires=10)
+            self.pose_encoder, self.pose_in_dim = get_encoder('frequency', input_dim=6, multires=4)
+            self.torso_deform_net = MLP(self.torso_deform_in_dim + self.pose_in_dim + self.individual_dim_torso, 2, 64, 3)
+
+            # torso color network
+            self.torso_encoder, self.torso_in_dim = get_encoder('tiledgrid', input_dim=2, num_levels=16, level_dim=2, base_resolution=16, log2_hashmap_size=16, desired_resolution=2048, interpolation='linear')
+            # self.torso_net = MLP(self.torso_in_dim + self.torso_deform_in_dim + self.pose_in_dim + self.individual_dim_torso + self.audio_dim, 4, 64, 3)
+            self.torso_net = MLP(self.torso_in_dim + self.torso_deform_in_dim + self.pose_in_dim + self.individual_dim_torso, 4, 32, 3)
+
+
+
+    def encode_audio(self, a):
+        a_feat = self.encoder_idexp_lm3d(a.view(-1, 3).float().contiguous(), bound=1)
+        a_feat = a_feat.view(1,-1).contiguous()
+        return a_feat
+
+
+    def forward_torso(self, x, poses, enc_a, c=None):
+        # x: [N, 2] in [-1, 1]
+        # head poses: [1, 6]
+        # c: [1, ind_dim], individual code
+
+        # test: shrink x
+        x = x * self.opt.torso_shrink
+
+        # deformation-based 
+        enc_pose = self.pose_encoder(poses)
+        enc_x = self.torso_deform_encoder(x)
+
+        if c is not None:
+            h = torch.cat([enc_x, enc_pose.repeat(x.shape[0], 1), c.repeat(x.shape[0], 1)], dim=-1)
+        else:
+            h = torch.cat([enc_x, enc_pose.repeat(x.shape[0], 1)], dim=-1)
+
+        dx = self.torso_deform_net(h)
+
+        x = (x + dx).clamp(-1, 1)
+
+        x = self.torso_encoder(x, bound=1)
+
+        # h = torch.cat([x, h, enc_a.repeat(x.shape[0], 1)], dim=-1)
+        h = torch.cat([x, h], dim=-1)
+
+        h = self.torso_net(h)
+
+        alpha = torch.sigmoid(h[..., :1])
+        color = torch.sigmoid(h[..., 1:])
+
+        return alpha, color, dx
+
+
+    def forward(self, x, d, enc_a, c, e=None):
+        # x: [N, 3], in [-bound, bound]
+        # d: [N, 3], nomalized in [-1, 1]
+        # enc_a: [1, aud_dim]
+        # c: [1, ind_dim], individual code
+        # e: [1, 1], eye feature
+
+        cond_feat_1 = self.mlp_lms_style_1(enc_a)
+        scale_1, shift_1 = cond_feat_1.chunk(2, dim=-1)
+
+        cond_feat_2 = self.mlp_lms_style_2(enc_a)
+        scale_2, shift_2 = cond_feat_2.chunk(2, dim=-1)
+
+        self.scales = [scale_1, scale_2]
+        self.shifts = [shift_1, shift_2]
+
+        enc_x = self.encoder(x, bound=self.bound)
+
+        h = self.sigma_net(enc_x, scales=self.scales, shifts=self.shifts)  
+
+        sigma = trunc_exp(h[..., 0])
+        geo_feat = h[..., 1:]
+
+        # color
+        enc_d = self.encoder_dir(d)
+
+        if c is not None:
+            h = torch.cat([enc_d, geo_feat, c.repeat(x.shape[0], 1)], dim=-1)
+        else:
+            h = torch.cat([enc_d, geo_feat], dim=-1)
+
+        h = self.color_net(h)
+
+        # sigmoid activation for rgb
+        color = torch.sigmoid(h)
+        ambient = torch.zeros((enc_x.shape[0], 2)).cuda() # fake ambient_pos
+
+        return sigma, color, ambient
+
+
+    def density(self, x, enc_a, e=None):
+        # x: [N, 3], in [-bound, bound]
+
+        cond_feat_1 = self.mlp_lms_style_1(enc_a)
+        scale_1, shift_1 = cond_feat_1.chunk(2, dim=-1)
+
+        cond_feat_2 = self.mlp_lms_style_2(enc_a)
+        scale_2, shift_2 = cond_feat_2.chunk(2, dim=-1)
+
+        self.scales = [scale_1, scale_2]
+        self.shifts = [shift_1, shift_2]
+
+        enc_x = self.encoder(x, bound=self.bound)
+
+        h = self.sigma_net(enc_x, scales=self.scales, shifts=self.shifts)  
+
+        sigma = trunc_exp(h[..., 0])
+        geo_feat = h[..., 1:]
+
+        return {
+            'sigma': sigma,
+            'geo_feat': geo_feat,
+        }
+
+
+    # optimizer utils
+    def get_params(self, lr, lr_net, wd=0):
+
+        # ONLY train torso
+        if self.torso:
+            params = [
+                {'params': self.torso_encoder.parameters(), 'lr': lr},
+                {'params': self.torso_net.parameters(), 'lr': lr_net, 'weight_decay': wd},
+                {'params': self.torso_deform_net.parameters(), 'lr': lr_net, 'weight_decay': wd},
+            ]
+
+            if self.individual_dim_torso > 0:
+                params.append({'params': self.individual_codes_torso, 'lr': lr_net, 'weight_decay': wd})
+
+            return params
+
+        params = [
+            {'params': self.encoder.parameters(), 'lr': lr},
+            {'params': self.encoder_idexp_lm3d.parameters(), 'lr': lr},
+            {'params': self.mlp_lms_style_1.parameters(), 'lr': lr_net, 'weight_decay': wd},
+            {'params': self.mlp_lms_style_2.parameters(), 'lr': lr_net, 'weight_decay': wd},
+            {'params': self.sigma_net.parameters(), 'lr': lr_net, 'weight_decay': wd},
+            {'params': self.color_net.parameters(), 'lr': lr_net, 'weight_decay': wd}, 
+        ]
+
+        if self.individual_dim > 0:
+            params.append({'params': self.individual_codes, 'lr': lr_net, 'weight_decay': wd})
+        if self.train_camera:
+            params.append({'params': self.camera_dT, 'lr': 10*1e-5, 'weight_decay': 0})
+            params.append({'params': self.camera_dR, 'lr': 10*1e-5, 'weight_decay': 0})
 
         return params

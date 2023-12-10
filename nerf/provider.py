@@ -123,12 +123,13 @@ class NeRFDataset_Test:
         if not self.opt.asr:
 
             aud_features = np.load(self.opt.aud)
-
             aud_features = torch.from_numpy(aud_features)
 
             # support both [N, 16] labels and [N, 16, K] logits
-            if len(aud_features.shape) == 3:
-                aud_features = aud_features.float().permute(0, 2, 1) # [N, 16, 29] --> [N, 29, 16]    
+            if len(aud_features.shape) == 3 and self.opt.cond_type != 'idexp':
+                if self.opt.cond_type != 'idexp':
+                    aud_features = aud_features.float().permute(0, 2, 1) # [N, 16, 29] --> [N, 29, 16]    
+   
 
                 if self.opt.emb:
                     print(f'[INFO] argmax to aud features {aud_features.shape} for --emb mode')
@@ -193,7 +194,7 @@ class NeRFDataset_Test:
         else:
             # auds corresponding to images
             if self.opt.aud == '':
-                self.auds = torch.stack(self.auds, dim=0) # [N, 32, 16]
+                self.auds = torch.stack(self.auds, dim=0) # eo: [N, 32, 16], idexp_lm3ds: [N, 68, 3]
             # auds is novel, may have a different length with images
             else:
                 self.auds = aud_features
@@ -256,7 +257,11 @@ class NeRFDataset_Test:
 
         # audio use the original index
         if self.auds is not None:
-            auds = get_audio_features(self.auds, self.opt.att, index[0]).to(self.device)
+            if self.opt.cond_type == 'idexp':
+                auds = get_audio_features(self.auds, self.opt.att, index[0], smooth_win_size=5).to(self.device)
+            else:
+                auds = get_audio_features(self.auds, self.opt.att, index[0]).to(self.device)
+            
             results['auds'] = auds
 
         # head pose and bg image may mirror (replay --> <-- --> <--).
@@ -386,13 +391,14 @@ class NeRFDataset:
 
         # only load pre-calculated aud features when not live-streaming
         if not self.opt.asr:
-
             # empty means the default self-driven extracted features.
             if self.opt.aud == '':
-                if 'esperanto' in self.opt.asr_model:
+                if self.opt.cond_type == 'eo':
                     aud_features = np.load(os.path.join(self.root_path, 'aud_eo.npy'))
-                elif 'deepspeech' in self.opt.asr_model:
+                elif self.opt.cond_type == 'ds':
                     aud_features = np.load(os.path.join(self.root_path, 'aud_ds.npy'))
+                elif self.opt.cond_type == 'idexp':
+                    aud_features = np.load(os.path.join(self.root_path, 'aud_idexp.npy'))
                 else:
                     aud_features = np.load(os.path.join(self.root_path, 'aud.npy'))
             # cross-driven extracted features. 
@@ -403,7 +409,8 @@ class NeRFDataset:
 
             # support both [N, 16] labels and [N, 16, K] logits
             if len(aud_features.shape) == 3:
-                aud_features = aud_features.float().permute(0, 2, 1) # [N, 16, 29] --> [N, 29, 16]    
+                if self.opt.cond_type != 'idexp':
+                    aud_features = aud_features.float().permute(0, 2, 1) # [N, 16, 29] --> [N, 29, 16]    
 
                 if self.opt.emb:
                     print(f'[INFO] argmax to aud features {aud_features.shape} for --emb mode')
@@ -412,6 +419,7 @@ class NeRFDataset:
             else:
                 assert self.opt.emb, "aud only provide labels, must use --emb"
                 aud_features = aud_features.long()
+
 
             print(f'[INFO] load {self.opt.aud} aud_features: {aud_features.shape}')
 
@@ -631,7 +639,11 @@ class NeRFDataset:
 
         # audio use the original index
         if self.auds is not None:
-            auds = get_audio_features(self.auds, self.opt.att, index[0]).to(self.device)
+            if self.opt.cond_type == 'idexp':
+                auds = get_audio_features(self.auds, self.opt.att, index[0], smooth_win_size=5).to(self.device)
+            else:
+                auds = get_audio_features(self.auds, self.opt.att, index[0]).to(self.device)
+
             results['auds'] = auds
 
         # head pose and bg image may mirror (replay --> <-- --> <--).

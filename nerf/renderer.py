@@ -48,7 +48,7 @@ def sample_pdf(bins, weights, n_samples, det=False):
 
 
 def plot_pointcloud(pc, color=None):
-    # pc: [N, 3]
+    # pc: [N, 3] 
     # color: [N, 3/4]
     print('[visualize points]', pc.shape, pc.dtype, pc.min(0), pc.max(0))
     pc = trimesh.PointCloud(pc, color)
@@ -157,7 +157,7 @@ class NeRFRenderer(nn.Module):
 
     def run_cuda(self, rays_o, rays_d, auds, bg_coords, poses, eye=None, index=0, dt_gamma=0, bg_color=None, perturb=False, force_all_rays=False, max_steps=1024, T_thresh=1e-4, **kwargs):
         # rays_o, rays_d: [B, N, 3], assumes B == 1
-        # auds: [B, 16]
+        # auds: [B, 16] or [B, 68, 3]
         # index: [B]
         # return: image: [B, N, 3], depth: [B, N]
 
@@ -389,7 +389,11 @@ class NeRFRenderer(nn.Module):
         
         # use random auds (different expressions should have similar density grid...)
         rand_idx = random.randint(0, self.aud_features.shape[0] - 1)
-        auds = get_audio_features(self.aud_features, self.att, rand_idx).to(self.density_bitfield.device)
+
+        if self.opt.cond_type == 'idexp':
+            auds = get_audio_features(self.aud_features, self.att, rand_idx, smooth_win_size=5).to(self.density_bitfield.device)
+        else:
+            auds = get_audio_features(self.aud_features, self.att, rand_idx).to(self.density_bitfield.device)
 
         # encode audio
         enc_a = self.encode_audio(auds)

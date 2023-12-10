@@ -11,7 +11,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--pose', type=str, help="transforms.json, pose source")
-    parser.add_argument('--aud', type=str, help="aud.npy, audio source")
+    parser.add_argument('--aud', type=str, default=None, help="aud.npy, audio source")
+    parser.add_argument('--cond_type', type=str, default='eo', help="type of driving condition: eo, ds, idexp")
     parser.add_argument('--bg_img', type=str, default='white', help="bg.jpg, background image source")
 
     parser.add_argument('-O', action='store_true', help="equals --fp16 --cuda_ray --exp_eye")

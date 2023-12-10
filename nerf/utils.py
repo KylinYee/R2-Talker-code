@@ -39,11 +39,11 @@ def custom_meshgrid(*args):
         return torch.meshgrid(*args, indexing='ij')
 
 
-def get_audio_features(features, att_mode, index):
+def get_audio_features(features, att_mode, index, smooth_win_size=8):
     if att_mode == 0:
         return features[[index]]
     elif att_mode == 1:
-        left = index - 8
+        left = index - smooth_win_size
         pad_left = 0
         if left < 0:
             pad_left = -left
@@ -54,8 +54,8 @@ def get_audio_features(features, att_mode, index):
             auds = torch.cat([torch.zeros(pad_left, *auds.shape[1:], device=auds.device, dtype=auds.dtype), auds], dim=0)
         return auds
     elif att_mode == 2:
-        left = index - 4
-        right = index + 4
+        left = index - smooth_win_size//2
+        right = index + (smooth_win_size-smooth_win_size//2)
         pad_left = 0
         pad_right = 0
         if left < 0:
