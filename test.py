@@ -12,7 +12,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--pose', type=str, help="transforms.json, pose source")
     parser.add_argument('--aud', type=str, default=None, help="aud.npy, audio source")
-    parser.add_argument('--cond_type', type=str, default='eo', help="type of driving condition: eo, ds, idexp")
+    parser.add_argument('--cond_type', type=str, default=None, help="type of driving condition: eo, ds, idexp")
+    parser.add_argument('--method', type=str, default='r2talker', help="r2talker, genefaceDagger, rad-nerf")
     parser.add_argument('--bg_img', type=str, default='white', help="bg.jpg, background image source")
 
     parser.add_argument('-O', action='store_true', help="equals --fp16 --cuda_ray --exp_eye")
@@ -110,6 +111,11 @@ if __name__ == '__main__':
 
     opt = parser.parse_args()
 
+    if opt.method == 'r2talker':
+        opt.cond_type = 'idexp'
+    elif opt.method == 'genefaceDagger':
+        opt.cond_type = 'idexp'
+
     # assert test mode
     opt.test = True
     opt.test_train = False
@@ -129,7 +135,7 @@ if __name__ == '__main__':
     opt.cuda_ray = True
     # assert opt.cuda_ray, "Only support CUDA ray mode."
    
-    from nerf.network import NeRFNetwork
+    from nerf.network import NeRFNetwork, R2TalkerNeRF, GeneNeRFNetwork
 
     print(opt)
     
@@ -137,7 +143,13 @@ if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    model = NeRFNetwork(opt)
+
+    if opt.method == 'r2talker':
+        model = R2TalkerNeRF(opt)
+    elif opt.method == 'genefaceDagger':
+        model = GeneNeRFNetwork(opt)
+    elif opt.method == 'rad-nerf':
+        model = NeRFNetwork(opt)
 
     # print(model)
 

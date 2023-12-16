@@ -123,6 +123,10 @@ class NeRFDataset_Test:
         if not self.opt.asr:
 
             aud_features = np.load(self.opt.aud)
+            if self.opt.method == 'genefaceDagger':
+                video_idexp_lm3d_mean = aud_features.mean(axis=0).reshape([1,68,3])
+                video_idexp_lm3d_std = aud_features.std(axis=0).reshape([1,68,3])
+                aud_features = (aud_features - video_idexp_lm3d_mean) / video_idexp_lm3d_std
             aud_features = torch.from_numpy(aud_features)
 
             # support both [N, 16] labels and [N, 16, K] logits
@@ -405,7 +409,14 @@ class NeRFDataset:
             else:
                 aud_features = np.load(self.opt.aud)
 
+        if self.opt.method == 'genefaceDagger':
+            video_idexp_lm3d_mean = aud_features.mean(axis=0).reshape([1,68,3])
+            video_idexp_lm3d_std = aud_features.std(axis=0).reshape([1,68,3])
+            aud_features = (aud_features - video_idexp_lm3d_mean) / video_idexp_lm3d_std
+
+
             aud_features = torch.from_numpy(aud_features)
+
 
             # support both [N, 16] labels and [N, 16, K] logits
             if len(aud_features.shape) == 3:

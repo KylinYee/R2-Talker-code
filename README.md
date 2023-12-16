@@ -1,14 +1,22 @@
 # R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning
 
-This is the official repository for the paper: [R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning](https://arxiv.org/abs/2211.12368).
+This is the official repository for the paper: [R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning](https://arxiv.org/abs/2312.05572).
 
-### [Paper](https://openaccess.thecvf.com/content/ICCV2023/html/Li_Efficient_Region-Aware_Neural_Radiance_Fields_for_High-Fidelity_Talking_Portrait_Synthesis_ICCV_2023_paper.html) | [Project](https://fictionarry.github.io/ER-NeRF/) | [ArXiv](https://arxiv.org/abs/2307.09323) | [Video](https://youtu.be/Gc2d3Z8MMuI) | [Data](https://drive.google.com/drive/folders/14LfowIkNdjRAD-0ezJ3JENWwY9_ytcXR?usp=sharing)
+###  [ArXiv](https://arxiv.org/abs/2312.05572) | [Video](https://www.youtube.com/watch?v=pdGFnCBiU5Y)
 
 ![image](assets/pipeline.png)
 
+
+# Features to be added
+
+- &#x2610; Add progressive optimization for hash grid
+- &#x2610; Add landmark generator
+- &#x2611; Add landmark encoder
+- &#x2611; Supports multiple methods: R2-Talker, RAD-NeRF, Geneface+instant-ngp 
+
 # Install
 
-Tested on Ubuntu 22.04, Pytorch 1.12 and CUDA 11.6.
+Tested on Windows 10 Pro, Pytorch 2.0.1+cu118 and CUDA 12.2.
 
 ```bash
 git clone git@github.com:KylinYee/R2-Talker-code.git
@@ -80,6 +88,8 @@ cd ../..
     python data_utils/process.py data/<ID>/<ID>.mp4 --task 1 # extract audio wave
     ```
 
+* 3D facial landmark generator will be added in the feature. If you want to process the custom data, please ref to [Geneface](https://github.com/yerfor/GeneFace/blob/main/docs/process_data/process_target_person_video.md) to obtain `trainval_dataset.npy`, using our `binarizedFile2landmarks.py` to extract landmarks and put the landmarks to `data/<ID>/`.
+
 * File structure after finishing all steps:
     ```bash
     ./data/<ID>
@@ -104,33 +114,26 @@ cd ../..
     ├──track_params.pt # raw head tracking results
     ├──transforms_train.json # head poses (train split)
     ├──transforms_val.json # head poses (test split)
+    |——aud_idexp_train.npy # head landmarks (train split)
+    |——aud_idexp_val.npy # head landmarks (test split)
     ```
 
 # Usage
 
 ### Quick Start
 
-We provide some pretrained models [here](https://drive.google.com/drive/folders/14LfowIkNdjRAD-0ezJ3JENWwY9_ytcXR?usp=sharing) for quick testing on arbitrary audio.
+We provide some pretrained models  [here](https://drive.google.com/drive/folders/1fWxPDpGTwYFVQztSAz05AVv_iFOkdDJs?usp=drive_link).
 
 * Download a pretrained model.
-    For example, we download `obama_eo.pth` to `./pretrained/obama_eo.pth`
+    For example, we download `r2talker_Obama_idexp_torso.pth` to `./pretrained/r2talker_Obama_idexp_torso.pth`
 
 * Download a pose sequence file.
-    For example, we download `obama.json` to `./data/obama.json`
+    For example, we download `transforms_val` to `./data/transforms_val`
 
-* Prepare your audio as `<name>.wav`, and extract audio features.
-    ```bash
-    # if model is `<ID>_eo.pth`, it uses wav2vec features
-    python nerf/asr.py --wav data/<name>.wav --save_feats # save to data/<name>_eo.npy
-
-    # if model is `<ID>.pth`, it uses deepspeech features 
-    python data_utils/deepspeech_features/extract_ds_features.py --input data/<name>.wav # save to data/<name>.npy
-    ```
-    You can download pre-processed audio features too. 
-    For example, we download `intro_eo.npy` to `./data/intro_eo.npy`.
-
+* Download 3D facial landmarks [here](https://drive.google.com/drive/folders/1fWxPDpGTwYFVQztSAz05AVv_iFOkdDJs?usp=drive_link). 
+    For example, we download `aud_idexp_train(val).npy` to `./data/Obama/aud_idexp_train(val).npy`
+    
 * Run inference:
-    It takes about 2GB GPU memory to run inference at 40FPS (measured on a V100).
     ```bash
     # save video to trail_obama/results/*.mp4
     # if model is `<ID>.pth`, should append `--asr_model deepspeech` and use `--aud intro.npy` instead.
@@ -141,7 +144,9 @@ We provide some pretrained models [here](https://drive.google.com/drive/folders/
 
     # test with GUI
     python test.py --pose data/obama.json --ckpt pretrained/obama_eo.pth --aud data/intro_eo.npy --workspace trial_obama/ -O --torso --bg_img data/bg.jpg --gui
+
     ```
+    You can execute these commands in batches by sh ./scripts/train_r2talker_Obama_idexp.sh, we also support for RAD-NeRF and GenefaceDagger(geneface+instant-ngp).
 
 ### Detailed Usage
 
@@ -154,29 +159,20 @@ First time running will take some time to compile the CUDA extensions.
 # `--preload 0`: load from disk (default, slower).
 # `--preload 1`: load to CPU, requires ~70G CPU memory (slightly slower)
 # `--preload 2`: load to GPU, requires ~24G GPU memory (fast)
-python main.py data/obama/ --workspace trial_obama/ -O --iters 200000
+python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp/ -O --iters 200000 --method r2talker --cond_type idexp
 
 # train (finetune lips for another 50000 steps, run after the above command!)
-python main.py data/obama/ --workspace trial_obama/ -O --iters 250000 --finetune_lips
+python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp/ -O --finetune_lips --iters 250000 --method r2talker --cond_type idexp
+
 
 # train (torso)
 # <head>.pth should be the latest checkpoint in trial_obama
-python main.py data/obama/ --workspace trial_obama_torso/ -O --torso --head_ckpt <head>.pth --iters 200000
+python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp_torso/ -O --torso --iters 200000 --head_ckpt trial_r2talker_Obama_idexp/checkpoints/ngp_ep0035.pth  --method r2talker --cond_type idexp
 
 # test on the test split
-python main.py data/obama/ --workspace trial_obama/ -O --test # use head checkpoint, will load GT torso
-python main.py data/obama/ --workspace trial_obama_torso/ -O --torso --test
+python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp_torso/ -O --test --method r2talker --cond_type idexp # use head checkpoint, will load GT torso
+python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp_torso/ -O --torso --test --method r2talker --cond_type idexp
 
-# test with GUI
-python main.py data/obama/ --workspace trial_obama_torso/ -O --torso --test --gui
-
-# test with GUI (load speech recognition model for real-time application)
-python main.py data/obama/ --workspace trial_obama_torso/ -O --torso --test --gui --asr
-
-# test with specific audio & pose sequence
-# --test_train: use train split for testing
-# --data_range: use this range's pose & eye sequence (if shorter than audio, automatically mirror and repeat)
-python main.py data/obama/ --workspace trial_obama_torso/ -O --torso --test --test_train --data_range 0 100 --aud data/intro_eo.npy
 ```
 
 check the `scripts` directory for more provided examples.
@@ -192,7 +188,7 @@ This code is developed heavily relying on [RAD-NeRF](https://github.com/ashawkey
 @article{zhiling2023r2talker,
   title={R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning},
   author={Zhiling Ye, Liangguo Zhang, Dingheng Zeng, Quan Lu, Ning Jiang},
-  journal={arXiv preprint arXiv:2211.12368},
+  journal={arXiv preprint arXiv:2312.05572},
   year={2023}
 }
 ```
