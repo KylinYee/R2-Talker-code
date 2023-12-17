@@ -10,7 +10,7 @@ This is the official repository for the paper: [R2-Talker: Realistic Real-Time T
 ###  [ArXiv](https://arxiv.org/abs/2312.05572) | [Video](https://www.youtube.com/watch?v=pdGFnCBiU5Y)
 
 ![image](assets/pipeline.png)
----
+
 
 
 # 0.Supported Features
@@ -26,7 +26,9 @@ This is the official repository for the paper: [R2-Talker: Realistic Real-Time T
 | [Geneface+instant-ngp](https://github.com/yerfor/GeneFace)     | 3D facial landmarks  | Audio Feature Extractor |                 
  
 
-# 1.Install
+# 1.Install 
+<details>
+<summary>  </summary>
 Tested on Ubuntu 22.04, Pytorch 1.12 and CUDA 11.6.
 
 ```bash
@@ -51,8 +53,12 @@ Therefore, we also provide the `setup.py` to build each extension:
 # install all extension modules
 bash scripts/install_ext.sh
 ```
+</details>
 
 # 2.Data pre-processing
+<details>
+<summary>  </summary>
+
 ### Preparation:
 
 ```bash
@@ -128,10 +134,11 @@ cd ../..
     |——aud_idexp_train.npy # head landmarks (train split)
     |——aud_idexp_val.npy # head landmarks (test split)
     ```
-
+</details>
 
 # 3.Usage
-
+<details>
+<summary>  </summary>
 ### Quick Start
 
 We provide some pretrained models  [here](https://drive.google.com/drive/folders/1fWxPDpGTwYFVQztSAz05AVv_iFOkdDJs?usp=drive_link).
@@ -178,6 +185,7 @@ python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp_torso/ -O --to
 ```
 
 check the `scripts` directory for more provided examples.
+</details>
 
 # 4.Acknowledgement
 
