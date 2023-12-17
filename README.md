@@ -14,15 +14,15 @@ This is the official repository for the paper: [R2-Talker: Realistic Real-Time T
 
 
 # 0.Features
-
+---
 - &#x2610; Add progressive optimization for hash grid
 - &#x2610; Add landmark generator
 - &#x2611; Add landmark encoder
 - &#x2611; Support methods: R2-Talker, RAD-NeRF, Geneface+instant-ngp 
 
----
-# 1.Install
 
+# 1.Install
+---
 Tested on Ubuntu 22.04, Pytorch 1.12 and CUDA 11.6.
 
 ```bash
@@ -48,9 +48,8 @@ Therefore, we also provide the `setup.py` to build each extension:
 bash scripts/install_ext.sh
 ```
 
----
 # 2.Data pre-processing
-
+---
 ### Preparation:
 
 ```bash
@@ -128,9 +127,8 @@ cd ../..
     ```
 
 
----
 # 3.Usage
-
+---
 ### Quick Start
 
 We provide some pretrained models  [here](https://drive.google.com/drive/folders/1fWxPDpGTwYFVQztSAz05AVv_iFOkdDJs?usp=drive_link).
@@ -178,14 +176,13 @@ python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp_torso/ -O --to
 
 check the `scripts` directory for more provided examples.
 
----
 # 4.Acknowledgement
-
+---
 This code is developed heavily relying on [RAD-NeRF](https://github.com/ashawkey/RAD-NeRF), [GeneFace](https://github.com/yerfor/GeneFace), and [AD-NeRF](https://github.com/YudongGuo/AD-NeRF).  Thanks for these great projects.
 
----
-# 5.Citation
 
+# 5.Citation
+---
 ```
 @article{zhiling2023r2talker,
   title={R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning},
