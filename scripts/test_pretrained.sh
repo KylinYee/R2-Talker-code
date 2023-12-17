@@ -1,23 +1,15 @@
-# test May eo
+# test Obama eo
+method=r2talker
+cond_type=idexp
+vid=Obama
+
 python test.py \
-    --pose data/May.json \
-    --ckpt pretrained/May_eo.pth \
-    --aud data/intro_eo.npy \
+    --pose data/${vid}/transforms_val.json \
+    --ckpt ./pretrained/${r2talker}_${vid}_${cond_type}_torso.pth \
+    --aud data/${vid}/intro_eo.npy \
     --workspace trial_test \
-    --bg_img data/bg.jpg \
+    --bg_img data/${vid}/bc.jpg \
     -O --torso --data_range 0 100 --preload 2
 
 # merge audio with video
-ffmpeg -y -i trial_test/results/ngp_ep0028.mp4 -i data/intro.wav -c:v copy -c:a aac May_eo_intro.mp4
-
-# # test May ds
-# python test.py \
-#     --pose data/May.json \
-#     --ckpt pretrained/May.pth \
-#     --aud data/intro.npy \
-#     --workspace trial_test \
-#     --bg_img data/bg.jpg \
-#     -O --torso --data_range 0 100 --asr_model deepspeech
-
-# # merge audio with video
-# ffmpeg -y -i trial_test/results/ngp_ep0056.mp4 -i data/intro.wav -c:v copy -c:a aac May_intro.mp4
+ffmpeg -y -i trial_test/results/${r2talker}_${vid}_${cond_type}.mp4 -i data/intro.wav -c:v copy -c:a aac ${r2talker}_${vid}_${cond_type}_aud.mp4

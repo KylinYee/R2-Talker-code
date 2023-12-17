@@ -1,5 +1,10 @@
 # R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning
 
+![License](https://img.shields.io/badge/license-MIT-yellow)
+[![Total Downloads](https://img.shields.io/github/downloads/KylinYee/R2-Talker-code/master/total.svg)](https://github.com/KylinYee/R2-Talker-code/master)
+[![GitHub Stars](https://img.shields.io/github/stars/KylinYee/R2-Talker-code.svg)](https://github.com/KylinYee/R2-Talker-code/master)
+
+
 This is the official repository for the paper: [R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning](https://arxiv.org/abs/2312.05572).
 
 ###  [ArXiv](https://arxiv.org/abs/2312.05572) | [Video](https://www.youtube.com/watch?v=pdGFnCBiU5Y)
@@ -7,21 +12,24 @@ This is the official repository for the paper: [R2-Talker: Realistic Real-Time T
 ![image](assets/pipeline.png)
 
 
-# Features to be added
+
+# 0.Features
 
 - &#x2610; Add progressive optimization for hash grid
 - &#x2610; Add landmark generator
 - &#x2611; Add landmark encoder
-- &#x2611; Supports multiple methods: R2-Talker, RAD-NeRF, Geneface+instant-ngp 
+- &#x2611; Support methods: R2-Talker, RAD-NeRF, Geneface+instant-ngp 
 
-# Install
+---
+# 1.Install
 
-Tested on Windows 10 Pro, Pytorch 2.0.1+cu118 and CUDA 12.2.
+Tested on Ubuntu 22.04, Pytorch 1.12 and CUDA 11.6.
 
 ```bash
 git clone git@github.com:KylinYee/R2-Talker-code.git
 cd R2-Talker-code
 ```
+
 
 ### Install dependency
 ```bash
@@ -40,7 +48,8 @@ Therefore, we also provide the `setup.py` to build each extension:
 bash scripts/install_ext.sh
 ```
 
-# Data pre-processing
+---
+# 2.Data pre-processing
 
 ### Preparation:
 
@@ -118,7 +127,9 @@ cd ../..
     |——aud_idexp_val.npy # head landmarks (test split)
     ```
 
-# Usage
+
+---
+# 3.Usage
 
 ### Quick Start
 
@@ -141,12 +152,7 @@ We provide some pretrained models  [here](https://drive.google.com/drive/folders
 
     # provide a background image (default is white)
     python test.py --pose data/obama.json --ckpt pretrained/obama_eo.pth --aud data/intro_eo.npy --workspace trial_obama/ -O --torso --bg_img data/bg.jpg
-
-    # test with GUI
-    python test.py --pose data/obama.json --ckpt pretrained/obama_eo.pth --aud data/intro_eo.npy --workspace trial_obama/ -O --torso --bg_img data/bg.jpg --gui
-
     ```
-    You can execute these commands in batches by sh ./scripts/train_r2talker_Obama_idexp.sh, we also support for RAD-NeRF and GenefaceDagger(geneface+instant-ngp).
 
 ### Detailed Usage
 
@@ -168,21 +174,17 @@ python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp/ -O --finetune
 # train (torso)
 # <head>.pth should be the latest checkpoint in trial_obama
 python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp_torso/ -O --torso --iters 200000 --head_ckpt trial_r2talker_Obama_idexp/checkpoints/ngp_ep0035.pth  --method r2talker --cond_type idexp
-
-# test on the test split
-python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp_torso/ -O --test --method r2talker --cond_type idexp # use head checkpoint, will load GT torso
-python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp_torso/ -O --torso --test --method r2talker --cond_type idexp
-
 ```
 
 check the `scripts` directory for more provided examples.
 
-
-# Acknowledgement
+---
+# 4.Acknowledgement
 
 This code is developed heavily relying on [RAD-NeRF](https://github.com/ashawkey/RAD-NeRF), [GeneFace](https://github.com/yerfor/GeneFace), and [AD-NeRF](https://github.com/YudongGuo/AD-NeRF).  Thanks for these great projects.
 
-# Citation
+---
+# 5.Citation
 
 ```
 @article{zhiling2023r2talker,
