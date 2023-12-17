@@ -54,7 +54,7 @@ Therefore, we also provide the `setup.py` to build each extension:
 bash scripts/install_ext.sh
 ```
 </details>
-<br>
+
 
 # 2.Data pre-processing
 <details>
@@ -136,7 +136,7 @@ cd ../..
     |——aud_idexp_val.npy # head landmarks (test split)
     ```
 </details>
-<br>
+
 
 # 3.Usage
 <details>
@@ -189,7 +189,7 @@ python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp_torso/ -O --to
 
 check the `scripts` directory for more provided examples.
 </details>
-<br>
+
 
 # 4.Acknowledgement
 
