@@ -137,6 +137,9 @@ cd ../..
     |——aud_idexp_train.npy # head landmarks (train split)
     |——aud_idexp_val.npy # head landmarks (test split)
     ```
+
+For your convenience, we provide some processed results of the Obama video [here](https://drive.google.com/drive/folders/1TYLqErPReo0KM3IdskfW9tY-TZlbxkic?usp=drive_link). And you can also download more raw videos from geneface [here](https://drive.google.com/drive/folders/1vimGVNvP6d6nmmc8yAxtWuooxhJbkl68).
+
 </details>
 
 
