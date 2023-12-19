@@ -114,7 +114,8 @@ if __name__ == '__main__':
         opt.cond_type = 'idexp'
     elif opt.method == 'genefaceDagger':
         opt.cond_type = 'idexp'
-
+    elif opt.method == 'rad-nerf':
+        opt.cond_type = 'eo'
 
     if opt.O:
         opt.fp16 = True

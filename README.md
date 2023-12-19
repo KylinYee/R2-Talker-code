@@ -1,8 +1,10 @@
 # R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning
 
 ![License](https://img.shields.io/badge/license-MIT-yellow)
-[![Total Downloads](https://img.shields.io/github/downloads/KylinYee/R2-Talker-code/master/total.svg)](https://github.com/KylinYee/R2-Talker-code/master)
-[![GitHub Stars](https://img.shields.io/github/stars/KylinYee/R2-Talker-code.svg)](https://github.com/KylinYee/R2-Talker-code/master)
+[![arXiv](https://img.shields.io/badge/arXiv-Paper-%3CCOLOR%3E.svg)](https://arxiv.org/abs/2312.05572)
+[![GitHub Stars](https://img.shields.io/github/stars/KylinYee/R2-Talker-code)](https://github.com/KylinYee/R2-Talker-code) 
+[![downloads](https://img.shields.io/github/downloads/KylinYee/R2-Talker-code/total.svg)](https://github.com/KylinYee/R2-Talker-code/releases)
+
 
 
 This is the official repository for the paper: [R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning](https://arxiv.org/abs/2312.05572).
@@ -144,25 +146,25 @@ cd ../..
 
 ### Quick Start
 
-We provide some pretrained models  [here](https://drive.google.com/drive/folders/1fWxPDpGTwYFVQztSAz05AVv_iFOkdDJs?usp=drive_link).
+We have prepared relevant materials [here](https://drive.google.com/drive/folders/11XgaNwlx3MDDJ7teFiLOe3VW2cT13-5X?usp=drive_link).
+Please download these materials and put them in the new `pretrained` file
+* File structure after finishing all steps:
+    ```bash
+    ./pretrained
+    ├──r2talker_Obama_idexp_torso.pth # pretrained model 
+    ├──test_eo.npy # driving audio features (wav2vec)
+    ├──test_lm3ds.npy # driving audio features (landmarks)
+    ├──test.wav # raw driving audio
+    ├──bc.jpg # default background
+    ├──transforms_val.json # head poses
+    ├──test.mp4 # raw driving video
+    ```
 
-* Download a pretrained model.
-    For example, we download `r2talker_Obama_idexp_torso.pth` to `./pretrained/r2talker_Obama_idexp_torso.pth`
-
-* Download a pose sequence file.
-    For example, we download `transforms_val` to `./data/transforms_val`
-
-* Download 3D facial landmarks [here](https://drive.google.com/drive/folders/1fWxPDpGTwYFVQztSAz05AVv_iFOkdDJs?usp=drive_link). 
-    For example, we download `aud_idexp_train(val).npy` to `./data/Obama/aud_idexp_train(val).npy`
     
 * Run inference:
     ```bash
-    # save video to trail_obama/results/*.mp4
-    # if model is `<ID>.pth`, should append `--asr_model deepspeech` and use `--aud intro.npy` instead.
-    python test.py --pose data/obama.json --ckpt pretrained/obama_eo.pth --aud data/intro_eo.npy --workspace trial_obama/ -O --torso
-
-    # provide a background image (default is white)
-    python test.py --pose data/obama.json --ckpt pretrained/obama_eo.pth --aud data/intro_eo.npy --workspace trial_obama/ -O --torso --bg_img data/bg.jpg
+    # save video to trail_test/results/*.mp4
+    sh scripts/test_pretrained.sh
     ```
 
 ### Detailed Usage
@@ -170,7 +172,7 @@ We provide some pretrained models  [here](https://drive.google.com/drive/folders
 First time running will take some time to compile the CUDA extensions.
 
 ```bash
-# train (head)
+# step.1 train (head)
 # by default, we load data from disk on the fly.
 # we can also preload all data to CPU/GPU for faster training, but this is very memory-hungry for large datasets.
 # `--preload 0`: load from disk (default, slower).
@@ -178,11 +180,11 @@ First time running will take some time to compile the CUDA extensions.
 # `--preload 2`: load to GPU, requires ~24G GPU memory (fast)
 python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp/ -O --iters 200000 --method r2talker --cond_type idexp
 
-# train (finetune lips for another 50000 steps, run after the above command!)
+# step.2 train (finetune lips for another 50000 steps, run after the above command!)
 python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp/ -O --finetune_lips --iters 250000 --method r2talker --cond_type idexp
 
 
-# train (torso)
+# step.3 train (torso)
 # <head>.pth should be the latest checkpoint in trial_obama
 python main.py data/Obama/ --workspace trial_r2talker_Obama_idexp_torso/ -O --torso --iters 200000 --head_ckpt trial_r2talker_Obama_idexp/checkpoints/ngp_ep0035.pth  --method r2talker --cond_type idexp
 ```

@@ -1,15 +1,17 @@
-# test Obama eo
+# test Obama r2talker
 method=r2talker
 cond_type=idexp
 vid=Obama
 
 python test.py \
-    --pose data/${vid}/transforms_val.json \
-    --ckpt ./pretrained/${r2talker}_${vid}_${cond_type}_torso.pth \
-    --aud data/${vid}/intro_eo.npy \
+    --method ${method} \
+    --cond_type ${cond_type} \
+    --pose ./pretrained/transforms_val.json \
+    --ckpt ./pretrained/${method}_${vid}_${cond_type}_torso.pth \
+    --aud ./pretrained/test_lm3ds.npy \
     --workspace trial_test \
-    --bg_img data/${vid}/bc.jpg \
-    -O --torso --data_range 0 100 --preload 2
+    --bg_img ./pretrained/bc.jpg \
+    -O --torso --data_range 0 100 
 
 # merge audio with video
-ffmpeg -y -i trial_test/results/${r2talker}_${vid}_${cond_type}.mp4 -i data/intro.wav -c:v copy -c:a aac ${r2talker}_${vid}_${cond_type}_aud.mp4
+ffmpeg -y -i trial_test/results/ngp_ep0028.mp4 -i ./pretrained/test.wav -c:v copy -c:a aac trial_test/results/${method}_${vid}_${cond_type}_aud.mp4

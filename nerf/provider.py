@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from .utils import get_audio_features, get_rays, get_bg_coords, convert_poses
-
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 # ref: https://github.com/NVlabs/instant-ngp/blob/b76004c8cf478880227401ae763be4c02f80b62f/include/neural-graphics-primitives/nerf_loader.h#L50
 def nerf_matrix_to_ngp(pose, scale=0.33, offset=[0, 0, 0]):
     new_pose = np.array([
@@ -123,14 +123,20 @@ class NeRFDataset_Test:
         if not self.opt.asr:
 
             aud_features = np.load(self.opt.aud)
+
+            if self.opt.cond_type == 'idexp':
+                aud_features = aud_features.reshape(-1, 68, 3)
+
             if self.opt.method == 'genefaceDagger':
                 video_idexp_lm3d_mean = aud_features.mean(axis=0).reshape([1,68,3])
                 video_idexp_lm3d_std = aud_features.std(axis=0).reshape([1,68,3])
                 aud_features = (aud_features - video_idexp_lm3d_mean) / video_idexp_lm3d_std
+
+
             aud_features = torch.from_numpy(aud_features)
 
             # support both [N, 16] labels and [N, 16, K] logits
-            if len(aud_features.shape) == 3 and self.opt.cond_type != 'idexp':
+            if len(aud_features.shape) == 3:
                 if self.opt.cond_type != 'idexp':
                     aud_features = aud_features.float().permute(0, 2, 1) # [N, 16, 29] --> [N, 29, 16]    
    
@@ -409,10 +415,10 @@ class NeRFDataset:
             else:
                 aud_features = np.load(self.opt.aud)
 
-        if self.opt.method == 'genefaceDagger':
-            video_idexp_lm3d_mean = aud_features.mean(axis=0).reshape([1,68,3])
-            video_idexp_lm3d_std = aud_features.std(axis=0).reshape([1,68,3])
-            aud_features = (aud_features - video_idexp_lm3d_mean) / video_idexp_lm3d_std
+            if self.opt.method == 'genefaceDagger':
+                video_idexp_lm3d_mean = aud_features.mean(axis=0).reshape([1,68,3])
+                video_idexp_lm3d_std = aud_features.std(axis=0).reshape([1,68,3])
+                aud_features = (aud_features - video_idexp_lm3d_mean) / video_idexp_lm3d_std
 
 
             aud_features = torch.from_numpy(aud_features)

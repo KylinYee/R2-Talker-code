@@ -1,0 +1,14 @@
+[INFO] Trainer: ngp | 2023-12-18_21-29-29 | cuda | fp32 | workspace
+[INFO] #parameters: 9022640
+[INFO] Loading ./pretrained/r2talker_Obama_idexp_torso.pth ...
+[INFO] loaded model.
+[WARN] missing keys: ['density_grid']
+[WARN] unexpected keys: ['individual_codes_torso', 'density_grid_torso', 'torso_deform_net.net.0.weight', 'torso_deform_net.net.1.weight', 'torso_deform_net.net.2.weight', 'torso_encoder.embeddings', 'torso_encoder.offsets', 'torso_net.net.0.weight', 'torso_net.net.1.weight', 'torso_net.net.2.weight']
+[INFO] load at epoch 28, global step 203616
+[INFO] Trainer: ngp | 2023-12-19_20-50-14 | cuda | fp32 | workspace
+[INFO] #parameters: 9022640
+[INFO] Loading ./pretrained/r2talker_Obama_idexp_torso.pth ...
+[INFO] loaded model.
+[WARN] missing keys: ['density_grid']
+[WARN] unexpected keys: ['individual_codes_torso', 'density_grid_torso', 'torso_deform_net.net.0.weight', 'torso_deform_net.net.1.weight', 'torso_deform_net.net.2.weight', 'torso_encoder.embeddings', 'torso_encoder.offsets', 'torso_net.net.0.weight', 'torso_net.net.1.weight', 'torso_net.net.2.weight']
+[INFO] load at epoch 28, global step 203616
