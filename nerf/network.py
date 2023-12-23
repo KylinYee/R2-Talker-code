@@ -53,7 +53,6 @@ class AudioNet(nn.Module):
         x = self.encoder_fc1(x).squeeze() # [b,out_dim=76]
         return x
 
-
 class AudioAttNet(nn.Module):
     # Audio feature attention-based smoother in AD-NeRF
     def __init__(self, in_out_dim=64, seq_len=8):
@@ -90,7 +89,6 @@ class AudioAttNet(nn.Module):
         smoothed_y = torch.sum(y*x, dim=0) # [8,1]*[8,c]=>[8,c]=>[c,]
         return smoothed_y
     
-
 class MLP(nn.Module):
     def __init__(self, dim_in, dim_out, dim_hidden, num_layers):
         super().__init__()
@@ -214,7 +212,8 @@ class NeRFNetwork(NeRFRenderer):
         enc_a = self.audio_net(a) # [1/8, 64]
 
         if self.att > 0:
-            enc_a = self.audio_att_net(enc_a.unsqueeze(0)) # [1, 64]
+            # enc_a = self.audio_att_net(enc_a.unsqueeze(0)) # [1, 64]
+            enc_a = self.audio_att_net(enc_a) # [1, 64]
             
         return enc_a
 
@@ -695,7 +694,8 @@ class R2TalkerNeRF(NeRFRenderer):
 
         self.eye_dim = 1 if self.exp_eye else 0
 
-        self.sigma_net = MLP(self.in_dim, 1 + self.geo_feat_dim, self.hidden_dim, self.num_layers)
+        self.sigma_net = MLP(self.in_dim + self.eye_dim, 1 + self.geo_feat_dim, self.hidden_dim, self.num_layers)
+
 
         # color network
         self.num_layers_color = num_layers_color        
@@ -780,6 +780,10 @@ class R2TalkerNeRF(NeRFRenderer):
 
         enc_x = self.encoder(x, bound=self.bound)
 
+        if e is not None:
+            enc_x = torch.cat([enc_x, e.repeat(x.shape[0], 1)], dim=-1)
+
+
         h = self.sigma_net(enc_x, scales=self.scales, shifts=self.shifts)  
 
         sigma = trunc_exp(h[..., 0])
@@ -815,6 +819,9 @@ class R2TalkerNeRF(NeRFRenderer):
         self.shifts = [shift_1, shift_2]
 
         enc_x = self.encoder(x, bound=self.bound)
+
+        if e is not None:
+            enc_x = torch.cat([enc_x, e.repeat(x.shape[0], 1)], dim=-1)
 
         h = self.sigma_net(enc_x, scales=self.scales, shifts=self.shifts)  
 

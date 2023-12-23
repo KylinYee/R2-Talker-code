@@ -9,7 +9,7 @@
 
 This is the official repository for the paper: [R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning](https://arxiv.org/abs/2312.05572).
 
-###  [ArXiv](https://arxiv.org/abs/2312.05572) | [Video](https://www.youtube.com/watch?v=pdGFnCBiU5Y)
+###  [Project](https://kylinyee.github.io/R2-Talker/) | [ArXiv](https://arxiv.org/abs/2312.05572) | [Video](https://www.youtube.com/watch?v=pdGFnCBiU5Y)
 
 ![image](assets/pipeline.png)
 
@@ -136,6 +136,7 @@ cd ../..
     ├──transforms_val.json # head poses (test split)
     |——aud_idexp_train.npy # head landmarks (train split)
     |——aud_idexp_val.npy # head landmarks (test split)
+    |——aud_idexp.npy # head landmarks
     ```
 
 For your convenience, we provide some processed results of the Obama video [here](https://drive.google.com/drive/folders/1TYLqErPReo0KM3IdskfW9tY-TZlbxkic?usp=drive_link). And you can also download more raw videos from geneface [here](https://drive.google.com/drive/folders/1vimGVNvP6d6nmmc8yAxtWuooxhJbkl68).
