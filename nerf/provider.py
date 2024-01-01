@@ -142,17 +142,20 @@ class NeRFDataset_Test:
                 idexp_lm3d_normalized[:,36:48,2] = torch.clamp(idexp_lm3d_normalized[:,36:48,2], -lm3d_clamp_std, lm3d_clamp_std) # eye_z
                 idexp_lm3d_normalized[:,48:68] = torch.clamp(idexp_lm3d_normalized[:,48:68], -lm3d_clamp_std, lm3d_clamp_std) # mouth
 
-                aud_features = (idexp_lm3d_normalized*idexp_lm3d_std + idexp_lm3d_mean).reshape([-1,68*3])
+                aud_features = idexp_lm3d_normalized*idexp_lm3d_std + idexp_lm3d_mean
 
-                _lambda_other = 0.4
-                _lambda_lip = 0.2
+
+                # _lambda_other = 0.4
+                # _lambda_lip = 0.2
                 moving_lm = aud_features[0].clone()
+                print(aud_features[0,:48].shape)
                 for i in range(aud_features.size()[0]):
-                    aud_features[i,0:17] = 2.0*_lambda_other * moving_lm[0:17] + (1 - 2.0*_lambda_other) * aud_features[i,0:17] # yaw
-                    aud_features[i,17:27] = 2.0*_lambda_other * moving_lm[17:27] + (1 - 2.0*_lambda_other) * aud_features[i,17:27] # brow
-                    aud_features[i,27:36] =  2.0*_lambda_other * moving_lm[27:36] + (1 - 2.0*_lambda_other) * aud_features[i,27:36] # nose
-                    aud_features[i,36:48] = _lambda_other * moving_lm[36:48] + (1 - _lambda_other) * aud_features[i,36:48] # eye
-                    aud_features[i,48:68] = _lambda_lip * moving_lm[48:68] + (1 - _lambda_lip) * aud_features[i,48:68]
+                    # aud_features[i,0:17] = 2.0*_lambda_other * moving_lm[0:17] + (1 - 2.0*_lambda_other) * aud_features[i,0:17] # yaw
+                    # aud_features[i,17:27] = 2.0*_lambda_other * moving_lm[17:27] + (1 - 2.0*_lambda_other) * aud_features[i,17:27] # brow
+                    # aud_features[i,27:36] =  2.0*_lambda_other * moving_lm[27:36] + (1 - 2.0*_lambda_other) * aud_features[i,27:36] # nose
+                    # aud_features[i,36:48] = _lambda_other * moving_lm[36:48] + (1 - _lambda_other) * aud_features[i,36:48] # eye
+                    aud_features[i,:48] = moving_lm[:48]
+                    # aud_features[i,48:68] = _lambda_lip * moving_lm[48:68] + (1 - _lambda_lip) * aud_features[i,48:68]
             else:
                 aud_features = torch.from_numpy(aud_features)
 
