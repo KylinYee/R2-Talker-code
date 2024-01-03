@@ -128,21 +128,21 @@ class NeRFDataset_Test:
                 aud_features = aud_features.reshape(-1, 68, 3)
                 aud_features = torch.from_numpy(aud_features)
 
-                # idexp_lm3d_mean = aud_features.mean(axis=0).reshape([1,68,3])
-                # idexp_lm3d_std = aud_features.std(axis=0).reshape([1,68,3])
-                # idexp_lm3d_normalized = (aud_features.reshape([-1,68,3]) - idexp_lm3d_mean)/idexp_lm3d_std
+                idexp_lm3d_mean = aud_features.mean(axis=0).reshape([1,68,3])
+                idexp_lm3d_std = aud_features.std(axis=0).reshape([1,68,3])
+                idexp_lm3d_normalized = (aud_features.reshape([-1,68,3]) - idexp_lm3d_mean)/idexp_lm3d_std
 
                 # step1. clamp the lm3d, to regularize apparent outliers
-                # lm3d_clamp_std = 2.5 # typically 1.~5., reduce it when blurry or bad cases occurs
-                # idexp_lm3d_normalized[:,0:17] = torch.clamp(idexp_lm3d_normalized[:,0:17], -lm3d_clamp_std, lm3d_clamp_std) # yaw_x_y_z
-                # idexp_lm3d_normalized[:,17:27,0:2] = torch.clamp(idexp_lm3d_normalized[:,17:27,0:2], -lm3d_clamp_std/2, lm3d_clamp_std/2) # brow_x_y
-                # idexp_lm3d_normalized[:,17:27,2] = torch.clamp(idexp_lm3d_normalized[:,17:27,2], -lm3d_clamp_std, lm3d_clamp_std) # brow_z
-                # idexp_lm3d_normalized[:,27:36] = torch.clamp(idexp_lm3d_normalized[:,27:36], -lm3d_clamp_std, lm3d_clamp_std) # nose
-                # idexp_lm3d_normalized[:,36:48,0:2] = torch.clamp(idexp_lm3d_normalized[:,36:48,0:2], -lm3d_clamp_std/2, lm3d_clamp_std/2) # eye_x_y
-                # idexp_lm3d_normalized[:,36:48,2] = torch.clamp(idexp_lm3d_normalized[:,36:48,2], -lm3d_clamp_std, lm3d_clamp_std) # eye_z
-                # idexp_lm3d_normalized[:,48:68] = torch.clamp(idexp_lm3d_normalized[:,48:68], -lm3d_clamp_std, lm3d_clamp_std) # mouth
+                lm3d_clamp_std = 2.3 # typically 1.~5., reduce it when blurry or bad cases occurs
+                idexp_lm3d_normalized[:,0:17] = torch.clamp(idexp_lm3d_normalized[:,0:17], -lm3d_clamp_std, lm3d_clamp_std) # yaw_x_y_z
+                idexp_lm3d_normalized[:,17:27,0:2] = torch.clamp(idexp_lm3d_normalized[:,17:27,0:2], -lm3d_clamp_std/2, lm3d_clamp_std/2) # brow_x_y
+                idexp_lm3d_normalized[:,17:27,2] = torch.clamp(idexp_lm3d_normalized[:,17:27,2], -lm3d_clamp_std, lm3d_clamp_std) # brow_z
+                idexp_lm3d_normalized[:,27:36] = torch.clamp(idexp_lm3d_normalized[:,27:36], -lm3d_clamp_std, lm3d_clamp_std) # nose
+                idexp_lm3d_normalized[:,36:48,0:2] = torch.clamp(idexp_lm3d_normalized[:,36:48,0:2], -lm3d_clamp_std/2, lm3d_clamp_std/2) # eye_x_y
+                idexp_lm3d_normalized[:,36:48,2] = torch.clamp(idexp_lm3d_normalized[:,36:48,2], -lm3d_clamp_std, lm3d_clamp_std) # eye_z
+                idexp_lm3d_normalized[:,48:68] = torch.clamp(idexp_lm3d_normalized[:,48:68], -lm3d_clamp_std, lm3d_clamp_std) # mouth
 
-                # aud_features = idexp_lm3d_normalized*idexp_lm3d_std + idexp_lm3d_mean
+                aud_features = idexp_lm3d_normalized*idexp_lm3d_std + idexp_lm3d_mean
 
 
                 # _lambda_other = 0.4
