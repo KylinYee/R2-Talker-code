@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/badge/license-MIT-yellow)
 [![arXiv](https://img.shields.io/badge/arXiv-Paper-%3CCOLOR%3E.svg)](https://arxiv.org/abs/2312.05572)
 [![GitHub Stars](https://img.shields.io/github/stars/KylinYee/R2-Talker-code)](https://github.com/KylinYee/R2-Talker-code.git) 
-[![downloads](https://img.shields.io/github/downloads/KylinYee/R2-Talker-code/total.svg)](https://github.com/KylinYee/R2-Talker-code/main)
+[![downloads](https://img.shields.io/github/downloads/KylinYee/R2-Talker-code/total.svg)](https://github.com/KylinYee/R2-Talker-code)
 
 
 This is the official repository for the paper: [R2-Talker: Realistic Real-Time Talking Head Synthesis with Hash Grid Landmarks Encoding and Progressive Multilayer Conditioning](https://arxiv.org/abs/2312.05572).
